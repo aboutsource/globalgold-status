@@ -1,7 +1,13 @@
-(function() {
+(() => {
+  'use strict';
+
   const App = {
     data() {
       return {
+        recheck: {
+          countdown: 0,
+          interval: 60,
+        },
         servers: [
           {host: 'gg1.aboutsource.net'},
           {host: 'gg-staging.aboutsource.net'},
@@ -11,16 +17,29 @@
     },
 
     mounted() {
-      this.load();
-      window.setInterval(() => this.load(), 60 * 1000);
+      this.tick();
+      window.setInterval(() => this.tick(), 1000);
     },
 
     methods: {
+      tick() {
+        if (this.recheck.loading) {
+          return;
+        }
+        if (this.recheck.countdown > 1) {
+          this.recheck.countdown--;
+          return;
+        }
+        this.load();
+      },
+
       load() {
-        this.servers.forEach(function(server) {
+        this.recheck.loading = true;
+
+        const loads = this.servers.map(function(server) {
           server.loading = true
 
-          fetch(`https://${server.host}/health`)
+          return fetch(`https://${server.host}/health`)
             .then(response => response.json())
             .then(data => {
               server.healthy = (data.status == 'ok');
@@ -32,13 +51,30 @@
             })
             .finally(() => {
               server.loading = false;
-            })
+            });
+        });
+
+        Promise.all(loads).finally(() => {
+          this.recheck.loading = false;
+          this.recheck.countdown = this.recheck.interval;
         });
       }
     },
   };
 
   var app = Vue.createApp(App);
+
+  app.component('rechecker', {
+    props: ['recheck'],
+    template: `
+      <button class="button is-primary" v-bind:disabled="recheck.loading">
+        <div class="icon">
+          <div class="fas fa-sync-alt" v-bind:class="{'fa-spin': recheck.loading}"></div>
+        </div>
+        <div>Recheck ({{ recheck.countdown }})</div>
+      </button>
+    `,
+  });
 
   app.component('server', {
     props: ['server'],
@@ -50,8 +86,8 @@
               <div class="fas fa-cog fa-spin">
               </div>
             </div>
-            <div class="icon" v-else v-bind:class="{'has-text-success': server.healthy, 'has-text-danger': !server.healthy}">
-              <div class="fas" v-bind:class="{'fa-check': server.healthy, 'fa-exclamation-triangle': !server.healthy}">
+            <div class="icon" v-else v-bind:class="[server.healthy ? 'has-text-success' : 'has-text-danger']">
+              <div class="fas" v-bind:class="[server.healthy ? 'fa-check': 'fa-exclamation-triangle']">
               </div>
             </div>
           </div>
@@ -71,4 +107,4 @@
   })
 
   app.mount('#app');
-}).call(this);
+}).call();
