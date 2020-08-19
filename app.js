@@ -80,26 +80,24 @@
     props: ['server'],
     template: `
       <div class="box">
-        <div class="columns is-mobile is-multiline">
-          <div class="column is-2-mobile is-1-tablet">
-            <div class="icon" v-if=server.loading>
-              <div class="fas fa-cog fa-spin">
+        <div class="level">
+          <div class="level-left">
+            <div class="level-item px-2">
+              <div class="icon" v-if=server.loading>
+                <div class="fas fa-cog fa-spin"></div>
+              </div>
+              <div class="icon" v-else v-bind:class="[server.healthy ? 'has-text-success' : 'has-text-danger']">
+                <div class="fas" v-bind:class="[server.healthy ? 'fa-check': 'fa-exclamation-triangle']"></div>
               </div>
             </div>
-            <div class="icon" v-else v-bind:class="[server.healthy ? 'has-text-success' : 'has-text-danger']">
-              <div class="fas" v-bind:class="[server.healthy ? 'fa-check': 'fa-exclamation-triangle']">
-              </div>
+            <div class="level-item px-2">
+              <strong>{{ server.host }}</strong>
             </div>
           </div>
-          <div class="column is-10-mobile is-6-tablet">
-            <strong>
-              {{ server.host }}
-            </strong>
-          </div>
-          <div class="column is-10-mobile is-5-tablet is-offset-2-mobile has-text-right-tablet">
-            <strong>
-              {{ server.release }}
-            </strong>
+          <div class="level-right">
+            <div class="level-item px-2">
+              <strong>{{ server.release }}</strong>
+            </div>
           </div>
         </div>
       </div>
