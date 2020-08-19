@@ -4,6 +4,7 @@
   const App = {
     data() {
       return {
+        notifications: Notification.permission == 'granted',
         recheck: {
           countdown: 0,
           interval: 60,
@@ -57,8 +58,25 @@
         Promise.all(loads).finally(() => {
           this.recheck.loading = false;
           this.recheck.countdown = this.recheck.interval;
+          this.notify();
         });
-      }
+      },
+
+      notify() {
+        if (!this.notifications || this.servers.every(server => server.healthy)) {
+          return;
+        }
+
+        new Notification('At least one of your servers does not look very happy.', {
+          body: 'I think it is best to panic and leave.',
+        });
+      },
+
+      enableNotifications() {
+        Notification.requestPermission().then(() => {
+          this.notifications = Notification.permission == 'granted';
+        });
+      },
     },
   };
 
