@@ -27,11 +27,14 @@
         if (this.recheck.loading) {
           return;
         }
-        if (this.recheck.countdown > 1) {
+
+        if (this.recheck.countdown > 0) {
           this.recheck.countdown--;
-          return;
         }
-        this.load();
+
+        if (this.recheck.countdown <= 0) {
+          this.load();
+        }
       },
 
       load() {
