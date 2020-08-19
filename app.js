@@ -58,8 +58,14 @@
         Promise.all(loads).finally(() => {
           this.recheck.loading = false;
           this.recheck.countdown = this.recheck.interval;
+          this.setIcon();
           this.notify();
         });
+      },
+
+      setIcon() {
+        const element = document.querySelector('head link[rel="icon"]');
+        element.href = this.servers.every(server => server.healthy) ? './success.svg' : './danger.svg';
       },
 
       notify() {
