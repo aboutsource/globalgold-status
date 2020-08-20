@@ -4,7 +4,7 @@
   const App = {
     data() {
       return {
-        notifications: Notification.permission == 'granted',
+        notifications: false,
         recheck: {
           countdown: 0,
           interval: 60,
@@ -18,6 +18,8 @@
     },
 
     mounted() {
+      this.notifications = (Notification.permission == 'granted' && localStorage.notifications == 'enabled');
+
       this.tick();
       window.setInterval(() => this.tick(), 1000);
     },
@@ -81,10 +83,9 @@
         });
       },
 
-      enableNotifications() {
-        Notification.requestPermission().then(() => {
-          this.notifications = Notification.permission == 'granted';
-        });
+      updateNotifications(notifications) {
+        localStorage.notifications = notifications ? 'enabled' : 'disabled';
+        this.notifications = notifications;
       },
     },
   };
@@ -104,8 +105,8 @@
       }
     },
     template: `
-      <div v-bind:class="wrapperClasses()">
-        <div v-bind:class="iconClasses()"></div>
+      <div :class="wrapperClasses()">
+        <div :class="iconClasses()"></div>
       </div>
     `,
     methods: {
@@ -119,7 +120,7 @@
       },
 
       wrapperClasses() {
-        let classes = ['icon']
+        let classes = ['icon'];
 
         if (this.color !== undefined) {
           classes.push(`has-text-${this.color}`);
@@ -129,10 +130,40 @@
     }
   });
 
+  app.component('notifier', {
+    props: ['notifications'],
+    template: `
+      <button class="button" @click="toggle">
+        <icon :icon="icon()"></icon>
+        <div>{{ text() }}</div>
+      </button>
+    `,
+    methods: {
+      icon() {
+        return this.notifications ? 'bell-slash' : 'bell';
+      },
+
+      text() {
+        return this.notifications ? 'Disable Notifications' : 'Get Notified';
+      },
+
+      toggle() {
+        if (this.notifications) {
+          this.$emit('update:notifications', false);
+          return;
+        }
+
+        Notification.requestPermission().then(() => {
+          this.$emit('update:notifications', Notification.permission == 'granted');
+        });
+      },
+    }
+  });
+
   app.component('rechecker', {
     props: ['recheck'],
     template: `
-      <button class="button is-primary" v-bind:disabled="recheck.loading">
+      <button class="button is-primary" :disabled="recheck.loading">
         <icon :icon="'sync-alt'" :spin="recheck.loading"></icon>
         <div>Recheck ({{ recheck.countdown }})</div>
       </button>
