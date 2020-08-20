@@ -91,13 +91,49 @@
 
   var app = Vue.createApp(App);
 
+  app.component('icon', {
+    props: {
+      icon: {
+        type: String,
+        required: true,
+      },
+      color: String,
+      spin: {
+        type: Boolean,
+        default() { return false; },
+      }
+    },
+    template: `
+      <div v-bind:class="wrapperClasses()">
+        <div v-bind:class="iconClasses()"></div>
+      </div>
+    `,
+    methods: {
+      iconClasses() {
+        let classes = ['fas', `fa-${this.icon}`];
+
+        if (this.spin) {
+          classes.push('fa-spin');
+        }
+        return classes;
+      },
+
+      wrapperClasses() {
+        let classes = ['icon']
+
+        if (this.color !== undefined) {
+          classes.push(`has-text-${this.color}`);
+        }
+        return classes;
+      }
+    }
+  });
+
   app.component('rechecker', {
     props: ['recheck'],
     template: `
       <button class="button is-primary" v-bind:disabled="recheck.loading">
-        <div class="icon">
-          <div class="fas fa-sync-alt" v-bind:class="{'fa-spin': recheck.loading}"></div>
-        </div>
+        <icon :icon="'sync-alt'" :spin="recheck.loading"></icon>
         <div>Recheck ({{ recheck.countdown }})</div>
       </button>
     `,
@@ -110,12 +146,9 @@
         <div class="level">
           <div class="level-left">
             <div class="level-item px-2">
-              <div class="icon" v-if=server.loading>
-                <div class="fas fa-cog fa-spin"></div>
-              </div>
-              <div class="icon" v-else v-bind:class="[server.healthy ? 'has-text-success' : 'has-text-danger']">
-                <div class="fas" v-bind:class="[server.healthy ? 'fa-check': 'fa-exclamation-triangle']"></div>
-              </div>
+              <icon v-if=server.loading icon="'cog'" :spin="true"></icon>
+              <icon v-else-if=server.healthy :icon="'check'" :color="'success'"></icon>
+              <icon v-else :icon="'exclamation-triangle'" :color="'danger'"></icon>
             </div>
             <div class="level-item px-2">
               <strong>{{ server.host }}</strong>
