@@ -5,6 +5,7 @@
     data() {
       return {
         notifications: false,
+        flash: null,
         recheck: {
           countdown: 0,
           interval: 60,
@@ -83,9 +84,14 @@
         });
       },
 
-      updateNotifications(notifications) {
-        localStorage.notifications = notifications ? 'enabled' : 'disabled';
-        this.notifications = notifications;
+      async updateNotifications(notifications) {
+        if (notifications) await Notification.requestPermission();
+        this.notifications = (notifications && Notification.permission == 'granted');
+        localStorage.notifications = this.notifications ? 'enabled' : 'disabled';
+
+        if (notifications != this.notifications)
+          this.flash = `It looks like you disabled notifications in your Browser.
+                        Please enable them to use the notification feature.`;
       },
     },
   };
@@ -130,6 +136,23 @@
     }
   });
 
+  app.component('flash', {
+    props: ['flash'],
+    template: `
+      <div class="box has-background-warning">
+        <div class="level">
+          <div class="level-left">
+            <div class="level-item px-2">
+              <icon :icon="'exclamation-circle'"></icon>
+            </div>
+            <div class="level-item px-2">
+              <strong>{{ flash }}</strong>
+            </div>
+          </div>
+      </div>
+    `,
+  });
+
   app.component('notifier', {
     props: ['notifications'],
     template: `
@@ -148,14 +171,7 @@
       },
 
       toggle() {
-        if (this.notifications) {
-          this.$emit('update:notifications', false);
-          return;
-        }
-
-        Notification.requestPermission().then(() => {
-          this.$emit('update:notifications', Notification.permission == 'granted');
-        });
+        this.$emit('update:notifications', !this.notifications);
       },
     }
   });

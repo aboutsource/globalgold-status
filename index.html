@@ -26,6 +26,7 @@
             </div>
           </div>
         </div>
+        <flash v-if="flash" :flash="flash"></flash>
         <div>
           <server v-for="server in servers" :server="server"></server>
         </div>
