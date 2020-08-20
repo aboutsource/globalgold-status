@@ -43,10 +43,10 @@
       load() {
         this.recheck.loading = true;
 
-        const loads = this.servers.map(function(server) {
-          server.loading = true
+        const loaders = this.servers.map(server => {
+          server.loading = true;
 
-          return fetch(`https://${server.host}/health`)
+          const fetcher = fetch(`https://${server.host}/health`)
             .then(response => response.json())
             .then(data => {
               server.healthy = (data.status == 'ok');
@@ -55,13 +55,19 @@
             .catch(() => {
               server.healthy = false;
               server.release = undefined;
-            })
-            .finally(() => {
-              server.loading = false;
             });
+
+          // Fake hard work ¯\_(ツ)_/¯
+          const timer = new Promise((resolve) => {
+            window.setTimeout(() => resolve(), (Math.random() * 2000) + 500);
+          });
+
+          return Promise.all([fetcher, timer]).finally(() => {
+            server.loading = false;
+          });
         });
 
-        Promise.all(loads).finally(() => {
+        Promise.all(loaders).finally(() => {
           this.recheck.loading = false;
           this.recheck.countdown = this.recheck.interval;
           this.setIcon();
@@ -96,7 +102,7 @@
     },
   };
 
-  var app = Vue.createApp(App);
+  let app = Vue.createApp(App);
 
   app.component('icon', {
     props: {
@@ -193,8 +199,8 @@
         <div class="level">
           <div class="level-left">
             <div class="level-item px-2">
-              <icon v-if=server.loading icon="'cog'" :spin="true"></icon>
-              <icon v-else-if=server.healthy :icon="'check'" :color="'success'"></icon>
+              <icon v-if="server.loading" :icon="'cog'" :spin="true"></icon>
+              <icon v-else-if="server.healthy" :icon="'check'" :color="'success'"></icon>
               <icon v-else :icon="'exclamation-triangle'" :color="'danger'"></icon>
             </div>
             <div class="level-item px-2">
